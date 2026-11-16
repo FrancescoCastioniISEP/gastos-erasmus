@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gastos Erasmus</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15171a" media="(prefers-color-scheme: dark)">
+<style>
+  :root {
+    --bg: #f4f1ea; --card: #ffffff; --ink: #1c1d1f; --soft: #6b6f76; --line: #e2ddd2;
+    --accent: #1f5fbf; --accent-ink: #ffffff; --good: #1d7a46; --bad: #b3261e; --chip: #ebe6da;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171a; --card: #1f2226; --ink: #f1efe9; --soft: #9aa0a8; --line: #30343a;
+      --accent: #6fa3f5; --accent-ink: #0d1626; --good: #6fcf97; --bad: #f2877f; --chip: #2a2e33;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 24px);
+    max-width: 520px; margin: 0 auto;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  .topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .rotulo { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); }
+  #saldo { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+  #saldo.neg { color: var(--bad); }
+  .icone { border: 1px solid var(--line); background: var(--card); border-radius: 12px; width: 44px; height: 44px; font-size: 20px; }
+  #estado { font-size: 13px; color: var(--soft); margin: 4px 0 14px; min-height: 18px; }
+  #estado.erro { color: var(--bad); }
+  #estado b { color: var(--ink); font-weight: 600; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px; margin-bottom: 14px; }
+  .linha-data { display: flex; align-items: center; gap: 8px; }
+  .linha-data input { flex: 1; min-width: 0; }
+  input[type=date], input[type=text], input[type=password] {
+    width: 100%; height: 46px; padding: 0 12px; border: 1px solid var(--line); border-radius: 12px;
+    background: var(--bg); font-size: 16px; -webkit-appearance: none; appearance: none;
+  }
+  .passo { border: 1px solid var(--line); background: var(--bg); border-radius: 12px; height: 46px; min-width: 46px; padding: 0 12px; }
+  #valor { height: 64px; font-size: 30px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; margin-top: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .chip { border: 1px solid transparent; background: var(--chip); border-radius: 999px; padding: 9px 13px; font-size: 14px; }
+  .chip.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .chip.entrada:not(.on) { border-color: var(--good); background: transparent; }
+  #guardar { width: 100%; height: 52px; margin-top: 12px; border: 0; border-radius: 14px; background: var(--accent); color: var(--accent-ink); font-size: 17px; font-weight: 700; }
+  #guardar:active { opacity: .8; }
+  #aviso { color: var(--bad); font-size: 14px; margin-top: 8px; min-height: 0; }
+  .cab-lista { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+  .cab-lista strong { font-variant-numeric: tabular-nums; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  li .txt { flex: 1; min-width: 0; }
+  li .cat { font-size: 15px; }
+  li .desc { font-size: 13px; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  li .val { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  li .val.entrada { color: var(--good); }
+  li .apagar { border: 0; background: none; color: var(--soft); font-size: 22px; width: 36px; height: 36px; }
+  .tag { font-size: 11px; border: 1px solid var(--line); border-radius: 6px; padding: 1px 5px; color: var(--soft); margin-left: 6px; }
+  .vazio { color: var(--soft); font-size: 14px; padding: 10px 0 2px; border-top: 1px solid var(--line); }
+  dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--card); color: var(--ink); width: min(92vw, 440px); padding: 18px; }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog h2 { margin: 0 0 6px; font-size: 19px; }
+  dialog p { font-size: 14px; color: var(--soft); margin: 6px 0 12px; }
+  dialog label { display: block; font-size: 13px; color: var(--soft); margin: 10px 0 4px; }
+  .acoes { display: flex; gap: 10px; margin-top: 16px; }
+  .acoes button { flex: 1; height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); }
+  .acoes .principal { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 700; }
+  #msg-def { font-size: 14px; margin-top: 10px; min-height: 20px; }
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <div>
+    <div class="rotulo">Saldo estimado hoje</div>
+    <div id="saldo">—</div>
+  </div>
+  <div>
+    <button class="icone" id="b-sync" aria-label="Sincronizar">↻</button>
+    <button class="icone" id="b-def" aria-label="Definições">⚙</button>
+  </div>
+</div>
+<div id="estado"></div>
+
+<div class="card">
+  <div class="linha-data">
+    <button class="passo" id="b-ant" aria-label="Dia anterior">◀</button>
+    <input type="date" id="data" aria-label="Data">
+    <button class="passo" id="b-seg" aria-label="Dia seguinte">▶</button>
+    <button class="passo" id="b-hoje">Hoje</button>
+  </div>
+  <input type="text" id="valor" inputmode="decimal" placeholder="0,00 €" autocomplete="off" aria-label="Valor em euros">
+  <div class="chips" id="chips"></div>
+  <input type="text" id="desc" placeholder="Descrição (opcional)" autocomplete="off" maxlength="120">
+  <button id="guardar">Guardar</button>
+  <div id="aviso"></div>
+</div>
+
+<div class="card">
+  <div class="cab-lista"><span id="titulo-dia"></span><strong id="total-dia"></strong></div>
+  <ul id="lista"></ul>
+</div>
+
+<dialog id="dlg">
+  <h2>Ligar ao GitHub</h2>
+  <p>Os gastos ficam no teu repositório privado. O token fica guardado só neste telemóvel.</p>
+  <label for="d-token">Token (fine-grained, Contents: Read and write)</label>
+  <input type="password" id="d-token" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <label for="d-owner">Utilizador do GitHub</label>
+  <input type="text" id="d-owner" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <label for="d-repo">Repositório privado dos dados</label>
+  <input type="text" id="d-repo" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <div id="msg-def"></div>
+  <div class="acoes">
+    <button id="d-fechar">Fechar</button>
+    <button id="d-ok" class="principal">Guardar e testar</button>
+  </div>
+</dialog>
+
+<script id="logica">
+// ---------------------------------------------------------------- lógica (sem ecrã; testada em Node)
+const Logica = (() => {
+  const CATS_GASTO = ["Alimentação", "Viagens", "Lazer", "Transporte Local",
+                      "Habitação & Contas Fixas", "Gerais / Outros", "Unknown"];
+  const CATS_ENTRADA = ["Entrada", "Reembolso"];
+
+  // Igual ao parse_valor do script: '12,50', '12.50', '1.234,50', '€ 3'
+  function parseValor(txt) {
+    let s = String(txt).trim().replace(/€/g, "").replace(/\s/g, "");
+    if (!s) throw new Error("Escreve um valor.");
+    if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
+    else s = s.replace(",", ".");
+    if (!/^-?(\d+\.?\d*|\.\d+)$/.test(s)) throw new Error("Valor inválido.");
+    return Number(s);
+  }
+
+  function fmtEur(v) {
+    const neg = v < 0 ? "-" : "";
+    const [i, d] = Math.abs(v).toFixed(2).split(".");
+    return `${neg}${i.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${d} €`;
+  }
+
+  function iso(d) {  // data local, sem passar por UTC
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function somarDias(isoData, n) {
+    const [a, m, d] = isoData.split("-").map(Number);
+    return iso(new Date(a, m - 1, d + n));
+  }
+
+  function novoId() {
+    const b = new Uint8Array(6);
+    crypto.getRandomValues(b);
+    return "T-" + Array.from(b, x => x.toString(16).padStart(2, "0")).join("");
+  }
+
+  function uidDe(op) { return String(op.uid || op.id || ""); }
+
+  // Junta as operações do GitHub com as que ainda só estão no telemóvel, sem repetir nenhuma.
+  function juntarOps(remotas, pendentes) {
+    const vistos = new Set();
+    const out = [];
+    for (const op of [...(remotas || []), ...(pendentes || [])]) {
+      const u = uidDe(op);
+      if (!u || vistos.has(u)) continue;
+      vistos.add(u);
+      out.push(op);
+    }
+    return out;
+  }
+
+  // Registos que o telemóvel mostra: o snapshot do PC + operações ainda não aplicadas no Excel.
+  function vista(snap, opsRemotas, pendentes) {
+    const regs = new Map();
+    for (const r of (snap && snap.registos) || []) regs.set(r.id, r);
+    for (const op of juntarOps(opsRemotas, pendentes)) {
+      if (op.op === "add") {
+        if (!regs.has(op.id)) {
+          regs.set(op.id, { id: op.id, data: op.data, valor: op.valor, cat: op.cat, desc: op.desc || "",
+                            origem: "Telemóvel", estado: "Real", porAplicar: true });
+        }
+      } else if (op.op === "del") {
+        regs.delete(op.id);
+      }
+    }
+    return [...regs.values()];
+  }
+
+  // Igual ao Livro.resumo() do script.
+  function saldo(regs, snap, hoje) {
+    const s = snap || {};
+    const entradas = s.categorias_entrada || CATS_ENTRADA;
+    const todas = new Set([...(s.categorias_gasto || CATS_GASTO), ...entradas]);
+    let total = Number(s.base) || 0;
+    for (const r of regs) {
+      if (r.estado !== "Real" || !todas.has(r.cat)) continue;
+      if ((s.inicio && r.data < s.inicio) || (s.fim && r.data > s.fim) || r.data > hoje) continue;
+      total += entradas.includes(r.cat) ? r.valor : -r.valor;
+    }
+    return Math.round(total * 100) / 100;
+  }
+
+  function doDia(regs, dia, entradas) {
+    const lista = regs.filter(r => r.data === dia && r.estado === "Real");
+    const total = lista.filter(r => !(entradas || CATS_ENTRADA).includes(r.cat)).reduce((t, r) => t + r.valor, 0);
+    return { lista, total: Math.round(total * 100) / 100 };
+  }
+
+  return { CATS_GASTO, CATS_ENTRADA, parseValor, fmtEur, iso, somarDias, novoId, uidDe, juntarOps, vista, saldo, doDia };
+})();
+if (typeof module !== "undefined") module.exports = Logica;
+</script>
+
+<script>
+// ---------------------------------------------------------------- aplicação
+(() => {
+  const L = Logica;
+  const $ = id => document.getElementById(id);
+  const OWNER = "FrancescoCastioniISEP", REPO = "gastos-erasmus-data";
+
+  // Guardado no telemóvel. Se o armazenamento falhar, a app continua a funcionar em memória.
+  const mem = {};
+  function ler(chave, def) {
+    try { const v = localStorage.getItem("gastos." + chave); return v === null ? (chave in mem ? mem[chave] : def) : JSON.parse(v); }
+    catch (e) { return chave in mem ? mem[chave] : def; }
+  }
+  function escrever(chave, v) {
+    mem[chave] = v;
+    try { localStorage.setItem("gastos." + chave, JSON.stringify(v)); } catch (e) { /* fica só em memória */ }
+  }
+
+  const st = {
+    cfg: ler("cfg", { token: "", owner: OWNER, repo: REPO }),
+    pend: ler("pend", []),       // operações ainda não enviadas para o GitHub
+    inbox: ler("inbox", []),     // operações já no GitHub, à espera do PC
+    snap: ler("snap", null),     // último resumo enviado pelo PC
+    sinc: ler("sinc", null),     // hora da última sincronização
+    dia: L.iso(new Date()),
+    cat: L.CATS_GASTO[0],
+    aSincronizar: false,
+    erro: "",
+  };
+
+  // ---------------------------------------------------------------- GitHub
+  const b64enc = s => { let bin = ""; new TextEncoder().encode(s).forEach(x => { bin += String.fromCharCode(x); }); return btoa(bin); };
+  const b64dec = s => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\s/g, "")), c => c.charCodeAt(0)));
+
+  async function gh(metodo, caminho, corpo) {
+    let r;
+    try {
+      r = await fetch(`https://api.github.com/repos/${st.cfg.owner}/${st.cfg.repo}${caminho}`, {
+        method: metodo, cache: "no-store",
+        headers: { "Authorization": `Bearer ${st.cfg.token}`, "Accept": "application/vnd.github+json",
+                   "X-GitHub-Api-Version": "2022-11-28" },
+        body: corpo ? JSON.stringify(corpo) : undefined,
+      });
+    } catch (e) { const err = new Error("Sem internet."); err.rede = true; throw err; }
+    if (r.status === 404) return { status: 404, json: null };
+    if (r.status === 409 || r.status === 422) { const err = new Error("Conflito."); err.conflito = true; throw err; }
+    if (r.status === 401 || r.status === 403) throw new Error("Token inválido, expirado ou sem acesso ao repositório.");
+    if (!r.ok) throw new Error(`O GitHub respondeu com o erro ${r.status}.`);
+    return { status: r.status, json: await r.json() };
+  }
+
+  async function ghLer(ficheiro) {
+    const { status, json } = await gh("GET", `/contents/${ficheiro}`);
+    if (status === 404 || !json) return { dados: null, sha: null };
+    let dados = null;
+    try { const t = b64dec(json.content || ""); dados = t.trim() ? JSON.parse(t) : null; } catch (e) { dados = null; }
+    return { dados, sha: json.sha };
+  }
+
+  async function ghEscrever(ficheiro, dados, sha, mensagem) {
+    const corpo = { message: mensagem, content: b64enc(JSON.stringify(dados, null, 1)) };
+    if (sha) corpo.sha = sha;
+    const { status } = await gh("PUT", `/contents/${ficheiro}`, corpo);
+    if (status === 404) throw new Error("O token não pode escrever no repositório (Contents: Read and write).");
+  }
+
+  async function sincronizar() {
+    if (!st.cfg.token || st.aSincronizar) return;
+    st.aSincronizar = true; st.erro = ""; desenharEstado();
+    let correuBem = false;
+    try {
+      // 1. Enviar o que está pendente. Se o PC mexer na inbox ao mesmo tempo, ler outra vez e repetir.
+      for (let t = 0; ; t++) {
+        const { dados, sha } = await ghLer("inbox.json");
+        const remotas = dados && Array.isArray(dados.ops) ? dados.ops : [];
+        const enviadas = st.pend.slice();
+        const juntas = L.juntarOps(remotas, enviadas);
+        try {
+          if (juntas.length !== remotas.length) await ghEscrever("inbox.json", { ops: juntas }, sha, "Telemóvel");
+          const uids = new Set(enviadas.map(L.uidDe));
+          st.pend = st.pend.filter(op => !uids.has(L.uidDe(op)));  // o que entrou durante o envio fica pendente
+          st.inbox = juntas;
+          escrever("pend", st.pend); escrever("inbox", st.inbox);
+          break;
+        } catch (e) { if (!e.conflito || t >= 3) throw e; }
+      }
+      // 2. Ler o resumo do PC.
+      const s = await ghLer("snapshot.json");
+      if (s.dados) { st.snap = s.dados; escrever("snap", st.snap); }
+      st.sinc = new Date().toISOString(); escrever("sinc", st.sinc);
+      correuBem = true;
+    } catch (e) {
+      st.erro = e.rede ? "" : e.message;  // sem internet não é erro: fica na fila
+    } finally {
+      st.aSincronizar = false;
+      desenhar();
+      if (correuBem && st.pend.length) setTimeout(sincronizar, 1500);  // entrou algo durante o envio
+    }
+  }
+
+  // ---------------------------------------------------------------- ecrã
+  function categorias() {
+    const s = st.snap || {};
+    return { gasto: s.categorias_gasto || L.CATS_GASTO, entrada: s.categorias_entrada || L.CATS_ENTRADA };
+  }
+
+  function desenharEstado() {
+    const el = $("estado");
+    el.className = st.erro ? "erro" : "";
+    if (st.erro) { el.textContent = st.erro; return; }
+    if (!st.cfg.token) { el.textContent = "Ainda não ligado ao GitHub: toca em ⚙."; return; }
+    const partes = [];
+    if (st.pend.length) partes.push(`<b>${st.pend.length} por enviar</b>`);
+    if (st.aSincronizar) partes.push("a sincronizar…");
+    else if (!navigator.onLine) partes.push("sem internet");
+    else if (st.sinc) partes.push("sincronizado às " + new Date(st.sinc).toLocaleTimeString("pt-PT", { hour: "2-digit", minute: "2-digit" }));
+    const porAplicar = st.inbox.length;
+    if (porAplicar) partes.push(`${porAplicar} à espera do PC`);
+    if (!st.snap) partes.push("abre o script no PC para veres o saldo");
+    el.innerHTML = partes.join(" · ");
+  }
+
+  function desenhar() {
+    const hoje = L.iso(new Date());
+    const regs = L.vista(st.snap, st.inbox, st.pend);
+    const cats = categorias();
+
+    const sEl = $("saldo");
+    if (st.snap) { const v = L.saldo(regs, st.snap, hoje); sEl.textContent = L.fmtEur(v); sEl.className = v < 0 ? "neg" : ""; }
+    else { sEl.textContent = "—"; sEl.className = ""; }
+    desenharEstado();
+
+    $("data").value = st.dia;
+    const chips = $("chips");
+    chips.textContent = "";
+    for (const c of [...cats.gasto, ...cats.entrada]) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (c === st.cat ? " on" : "") + (cats.entrada.includes(c) ? " entrada" : "");
+      b.textContent = c;
+      b.addEventListener("click", () => { st.cat = c; desenhar(); });
+      chips.appendChild(b);
+    }
+
+    const { lista, total } = L.doDia(regs, st.dia, cats.entrada);
+    const [a, m, d] = st.dia.split("-");
+    $("titulo-dia").textContent = st.dia === hoje ? "Hoje" : `${d}/${m}/${a}`;
+    $("total-dia").textContent = L.fmtEur(total);
+    const ul = $("lista");
+    ul.textContent = "";
+    if (!lista.length) {
+      const v = document.createElement("div"); v.className = "vazio"; v.textContent = "Sem gastos neste dia.";
+      ul.appendChild(v);
+    }
+    const porEnviar = new Set(st.pend.filter(o => o.op === "add").map(o => o.id));
+    for (const r of lista) {
+      const li = document.createElement("li");
+      const txt = document.createElement("div"); txt.className = "txt";
+      const cat = document.createElement("div"); cat.className = "cat"; cat.textContent = r.cat;
+      if (porEnviar.has(r.id)) { const t = document.createElement("span"); t.className = "tag"; t.textContent = "por enviar"; cat.appendChild(t); }
+      txt.appendChild(cat);
+      if (r.desc) { const ds = document.createElement("div"); ds.className = "desc"; ds.textContent = r.desc; txt.appendChild(ds); }
+      const ent = cats.entrada.includes(r.cat);
+      const val = document.createElement("div"); val.className = "val" + (ent ? " entrada" : "");
+      val.textContent = (ent ? "+" : "") + L.fmtEur(r.valor);
+      const x = document.createElement("button"); x.className = "apagar"; x.textContent = "×"; x.setAttribute("aria-label", "Apagar");
+      x.addEventListener("click", () => apagar(r));
+      li.append(txt, val, x);
+      ul.appendChild(li);
+    }
+
+    const s = st.snap, av = $("aviso");
+    if (s && (st.dia < s.inicio || st.dia > s.fim) && !av.dataset.erro) av.textContent = "Atenção: esta data está fora do Erasmus, não entra no saldo.";
+    else if (!av.dataset.erro) av.textContent = "";
+  }
+
+  function avisar(msg) { const av = $("aviso"); av.dataset.erro = msg ? "1" : ""; av.textContent = msg || ""; if (!msg) desenhar(); }
+
+  function guardar() {
+    let valor;
+    try { valor = L.parseValor($("valor").value); } catch (e) { avisar(e.message); return; }
+    if (!(valor > 0)) { avisar("O valor tem de ser positivo. A categoria diz se é gasto ou entrada."); return; }
+    if (!st.dia) { avisar("Escolhe uma data."); return; }
+    const id = L.novoId();
+    st.pend.push({ uid: id, op: "add", id, data: st.dia, valor: Math.round(valor * 100) / 100, cat: st.cat,
+                   desc: $("desc").value.trim(), criado: new Date().toISOString() });
+    escrever("pend", st.pend);
+    $("valor").value = ""; $("desc").value = "";
+    avisar("");
+    sincronizar();
+  }
+
+  function apagar(r) {
+    if (!confirm(`Apagar ${r.cat} ${L.fmtEur(r.valor)}?`)) return;
+    const i = st.pend.findIndex(o => o.op === "add" && o.id === r.id);
+    if (i >= 0) st.pend.splice(i, 1);             // ainda nem saiu do telemóvel: basta tirar da fila
+    else st.pend.push({ uid: "D-" + L.novoId(), op: "del", id: r.id, criado: new Date().toISOString() });
+    escrever("pend", st.pend);
+    desenhar();
+    sincronizar();
+  }
+
+  // ---------------------------------------------------------------- definições
+  function abrirDefinicoes() {
+    $("d-token").value = st.cfg.token; $("d-owner").value = st.cfg.owner; $("d-repo").value = st.cfg.repo;
+    $("msg-def").textContent = "";
+    $("dlg").showModal();
+  }
+
+  async function guardarDefinicoes() {
+    const antes = st.cfg;
+    st.cfg = { token: $("d-token").value.trim(), owner: $("d-owner").value.trim() || OWNER, repo: $("d-repo").value.trim() || REPO };
+    const msg = $("msg-def");
+    if (!st.cfg.token) { msg.textContent = "Cola o token primeiro."; st.cfg = antes; return; }
+    msg.textContent = "A testar…";
+    try {
+      const r = await gh("GET", "");
+      if (r.status === 404) throw new Error("O token não vê esse repositório. Confirma o nome e que o escolheste ao criar o token.");
+      escrever("cfg", st.cfg);
+      msg.textContent = "Ligado.";
+      $("dlg").close();
+      sincronizar();
+    } catch (e) { msg.textContent = e.message; st.cfg = antes; }
+  }
+
+  // ---------------------------------------------------------------- arranque
+  $("guardar").addEventListener("click", guardar);
+  $("valor").addEventListener("keydown", e => { if (e.key === "Enter") guardar(); });
+  $("desc").addEventListener("keydown", e => { if (e.key === "Enter") guardar(); });
+  $("valor").addEventListener("input", () => { if ($("aviso").dataset.erro) avisar(""); });
+  $("data").addEventListener("change", e => { st.dia = e.target.value || L.iso(new Date()); desenhar(); });
+  $("b-ant").addEventListener("click", () => { st.dia = L.somarDias(st.dia, -1); desenhar(); });
+  $("b-seg").addEventListener("click", () => { st.dia = L.somarDias(st.dia, 1); desenhar(); });
+  $("b-hoje").addEventListener("click", () => { st.dia = L.iso(new Date()); desenhar(); });
+  $("b-sync").addEventListener("click", sincronizar);
+  $("b-def").addEventListener("click", abrirDefinicoes);
+  $("d-fechar").addEventListener("click", () => $("dlg").close());
+  $("d-ok").addEventListener("click", guardarDefinicoes);
+  window.addEventListener("online", sincronizar);
+  window.addEventListener("offline", desenharEstado);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) sincronizar(); });
+
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  desenhar();
+  if (st.cfg.token) sincronizar(); else abrirDefinicoes();
+})();
+</script>
+</body>
+</html>
